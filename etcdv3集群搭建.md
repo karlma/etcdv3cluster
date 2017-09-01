@@ -1,10 +1,8 @@
-etcd v3 集群搭建
-========
+# etcd v3 集群搭建
 
-[TOC]
+\[TOC\]
 
-
-## Build docker image
+## Build docker image {#etcd-v3-集群搭建}
 
 ```
 git clone https://github.com/coreos/etcd.git
@@ -29,7 +27,7 @@ NETWORK ID          NAME                DRIVER              SCOPE
 99f7ffe66c0f        none                null                local
 ```
 
-2. 创建自定义的network
+1. 创建自定义的network
 
 ```
 $ docker network create --subnet=172.18.0.0/24 mynet
@@ -41,15 +39,15 @@ dc5ad6b73214        mynet               bridge              local
 99f7ffe66c0f        none                null                local
 ```
 
-3. 启动etcd
+1. 启动etcd
 
 ```
 $ export HOST=192.168.1.64 
 $ export NODE1=172.18.0.3
-$ docker run --net mynet --ip ${NODE1} -p 2379:2379 -p 2380:2380 --name etcd karl/etcd:v3.2.6 --name node1 --initial-advertise-peer-urls http://${HOST}:2380 --listen-peer-urls http://${NODE1}:2380 --advertise-client-urls http://${HOST}:2379 --listen-client-urls http://${NODE1}:2379 --initial-cluster node1=http://${HOST}:2380 
+$ docker run --net mynet --ip ${NODE1} -p 2379:2379 -p 2380:2380 --name etcd karl/etcd:v3.2.6 --name node1 --initial-advertise-peer-urls http://${HOST}:2380 --listen-peer-urls http://${NODE1}:2380 --advertise-client-urls http://${HOST}:2379 --listen-client-urls http://${NODE1}:2379 --initial-cluster node1=http://${HOST}:2380
 ```
 
-4. 测试etcd
+1. 测试etcd
 
 ```
 $ etcdctl cluster-health
@@ -79,59 +77,59 @@ CLUSTER_STATE=new
 
 start_etcd() {
 
-	docker run --net mynet --ip $1 \
-		-p $2:2379 -p $3:2380 \
-		--volume=$5:/etcd-data \
-		--name $4 \
-		-d \
-		karl/etcd:v3.2.6 --data-dir=/etcd-data --name $4 \
-		--initial-advertise-peer-urls http://${HOST}:$3 \
-		--listen-peer-urls http://$1:2380 \
-		--advertise-client-urls http://${HOST}:$2 \
-		--listen-client-urls http://$1:2379 \
-		--initial-cluster ${CLUSTER} \
-		--initial-cluster-state ${CLUSTER_STATE} \
-		--initial-cluster-token ${TOKEN}
+    docker run --net mynet --ip $1 \
+        -p $2:2379 -p $3:2380 \
+        --volume=$5:/etcd-data \
+        --name $4 \
+        -d \
+        karl/etcd:v3.2.6 --data-dir=/etcd-data --name $4 \
+        --initial-advertise-peer-urls http://${HOST}:$3 \
+        --listen-peer-urls http://$1:2380 \
+        --advertise-client-urls http://${HOST}:$2 \
+        --listen-client-urls http://$1:2379 \
+        --initial-cluster ${CLUSTER} \
+        --initial-cluster-state ${CLUSTER_STATE} \
+        --initial-cluster-token ${TOKEN}
 
 }
 
 start() {
-	c=${#NODE_IP[*]}
-	i=0
-	while [ "$i" -lt "$c" ]
-	do
-		echo -n "${NAME[$i]} -- "
-		start_etcd ${NODE_IP[$i]} ${PORT_2379[$i]} ${PORT_2380[$i]} ${NAME[$i]} ${DATA_DIR[$i]}
-		((i++))
-	done
+    c=${#NODE_IP[*]}
+    i=0
+    while [ "$i" -lt "$c" ]
+    do
+        echo -n "${NAME[$i]} -- "
+        start_etcd ${NODE_IP[$i]} ${PORT_2379[$i]} ${PORT_2380[$i]} ${NAME[$i]} ${DATA_DIR[$i]}
+        ((i++))
+    done
 }
 
 stop() {
-	for i in ${NAME[*]}
-	do
-		docker stop $i
-	done
+    for i in ${NAME[*]}
+    do
+        docker stop $i
+    done
 }
 
 remove() {
-	for i in ${NAME[*]}
-	do
-		docker rm $i
-	done
+    for i in ${NAME[*]}
+    do
+        docker rm $i
+    done
 }
 
 case $1 in
-	start )
-		start
-		;;
-	stop )
-		stop
-		;;
-	remove )
-		remove
-		;;
-	* )
-		echo "Usage: $0 start|stop|remove"
+    start )
+        start
+        ;;
+    stop )
+        stop
+        ;;
+    remove )
+        remove
+        ;;
+    * )
+        echo "Usage: $0 start|stop|remove"
 esac
 ```
 
@@ -148,6 +146,7 @@ esac
 ```
 ./etcd gateway start --listen-addr 127.0.0.1:2379 --endpoints 192.168.1.64:2379,192.168.1.64:2381,192.168.1.64:2383
 ```
+
 Gateway方式只是简单的代理，不缓存，会增加延时。
 
 ## 本地启动集群
@@ -156,4 +155,6 @@ Gateway方式只是简单的代理，不缓存，会增加延时。
 $ go get github.com/mattn/goreman
 $ goreman -f Procfile start
 ```
+
 Profile文件在源码目录下。
+
